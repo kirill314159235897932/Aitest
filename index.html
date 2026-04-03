@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Generator - Нейросеть пишет код</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Code Generator</h1>
+            <p>Нейросеть на JavaScript, которая пишет код</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h3>⚙️ Настройки</h3>
+                
+                <div class="form-group">
+                    <label>📁 Название проекта</label>
+                    <input type="text" id="projectName" placeholder="MyApp" value="MyApplication">
+                </div>
+
+                <div class="form-group">
+                    <label>🔧 Тип приложения</label>
+                    <select id="appType">
+                        <option value="calculator">Калькулятор</option>
+                        <option value="todo">Todo-лист</option>
+                        <option value="api">API клиент</option>
+                        <option value="game">Мини-игра</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🎨 Дополнительные параметры</label>
+                    <textarea id="customParams" rows="3" placeholder="Например: с тестами, с графикой..."></textarea>
+                </div>
+
+                <button id="generateBtn" class="btn-primary">🚀 Сгенерировать проект</button>
+                <button id="runBtn" class="btn-run" style="display:none;">▶️ Выполнить код</button>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Нейросеть генерирует код...</p>
+                </div>
+            </aside>
+
+            <main class="code-area">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="code">📝 Код</button>
+                    <button class="tab-btn" data-tab="preview">▶️ Предпросмотр</button>
+                    <button class="tab-btn" data-tab="console">🖥️ Консоль</button>
+                </div>
+
+                <div id="codeTab" class="tab-content active">
+                    <pre><code id="generatedCode">// Нажмите "Сгенерировать проект"</code></pre>
+                    <div class="button-group">
+                        <button id="copyBtn" class="btn-secondary">📋 Копировать</button>
+                        <button id="downloadBtn" class="btn-secondary">💾 Скачать .js</button>
+                    </div>
+                </div>
+
+                <div id="previewTab" class="tab-content">
+                    <div id="previewOutput" class="preview-box">
+                        <p>✨ Здесь появится результат выполнения кода</p>
+                    </div>
+                </div>
+
+                <div id="consoleTab" class="tab-content">
+                    <div id="consoleOutput" class="console-box">
+                        <div>> Нейросеть готова к работе</div>
+                        <div>> Нажмите "Сгенерировать проект"</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ПОДКЛЮЧАЕМ НЕЙРОСЕТЬ -->
+    <script src="script.js"></script>
+    
+    <!-- ЗАПУСКАЕМ HTML ИНТЕРФЕЙС -->
+    <script>
+        // Ждем загрузки страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ HTML загружен, нейросеть готова');
+            
+            // Элементы интерфейса
+            const generateBtn = document.getElementById('generateBtn');
+            const runBtn = document.getElementById('runBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loading = document.getElementById('loading');
+            const codeOutput = document.getElementById('generatedCode');
+            const previewOutput = document.getElementById('previewOutput');
+            const consoleOutput = document.getElementById('consoleOutput');
+            
+            let currentCode = '';
+            
+            // Генерация кода нейросетью
+            generateBtn.addEventListener('click', async () => {
+                const projectName = document.getElementById('projectName').value;
+                const appType = document.getElementById('appType').value;
+                const customParams = document.getElementById('customParams').value;
+                
+                // Показываем загрузку
+                loading.style.display = 'block';
+                generateBtn.disabled = true;
+                
+                // Имитируем работу нейросети (в реальности здесь API запрос)
+                setTimeout(() => {
+                    // Нейросеть генерирует код
+                    currentCode = window.CodeNeuralNetwork.generate(appType, projectName, customParams);
+                    codeOutput.textContent = currentCode;
+                    
+                    // Показываем кнопку выполнения
+                    runBtn.style.display = 'inline-block';
+                    
+                    // Скрываем загрузку
+                    loading.style.display = 'none';
+                    generateBtn.disabled = false;
+                    
+                    // Лог в консоль
+                    addConsoleMessage('✅ Код успешно сгенерирован нейросетью', 'success');
+                    addConsoleMessage(`📁 Тип: ${appType}, Проект: ${projectName}`, 'info');
+                    
+                }, 1500);
+            });
+            
+            // Выполнение кода
+            runBtn.addEventListener('click', () => {
+                if (!currentCode) return;
+                
+                addConsoleMessage('▶️ Запуск выполнения кода...', 'info');
+                previewOutput.innerHTML = '';
+                
+                // Перехватываем console.log
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    addConsoleMessage(args.join(' '), 'output');
+                    originalLog.apply(console, args);
+                };
+                
+                try {
+                    // Создаем функцию из кода и выполняем
+                    const runFunction = new Function(currentCode);
+                    const result = runFunction();
+                    
+                    if (result !== undefined) {
+                        previewOutput.innerHTML += `<div class="result-box">✅ Результат: <pre>${JSON.stringify(result, null, 2)}</pre></div>`;
+                        addConsoleMessage(`✅ Выполнение завершено успешно`, 'success');
+                    }
+                } catch (error) {
+                    previewOutput.innerHTML += `<div class="error-box">❌ Ошибка: ${error.message}</div>`;
+                    addConsoleMessage(`❌ Ошибка: ${error.message}`, 'error');
+                }
+                
+                // Восстанавливаем console.log
+                console.log = originalLog;
+            });
+            
+            // Копирование кода
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(currentCode);
+                addConsoleMessage('📋 Код скопирован в буфер обмена', 'success');
+            });
+            
+            // Скачивание кода
+            downloadBtn.addEventListener('click', () => {
+                const blob = new Blob([currentCode], { type: 'text/javascript' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${document.getElementById('projectName').value || 'app'}.js`;
+                a.click();
+                URL.revokeObjectURL(url);
+                addConsoleMessage('💾 Файл сохранен', 'success');
+            });
+            
+            // Функция добавления сообщений в консоль
+            function addConsoleMessage(message, type = 'output') {
+                const div = document.createElement('div');
+                div.className = `console-${type}`;
+                div.textContent = `> ${message}`;
+                consoleOutput.appendChild(div);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+            
+            // Переключение вкладок
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    document.getElementById(`${tabId}Tab`).classList.add('active');
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
